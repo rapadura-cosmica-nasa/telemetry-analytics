@@ -16,6 +16,7 @@ def test_nominal_telemetry(client):
     response = client.post('/api/v1/analyze', json=data)
     assert response.status_code == 200
     assert response.get_json()['riskLevel'] == "NOMINAL"
+    assert response.get_json()['recommendedAction'] == "Manter cronograma nominal da missão e monitoramento telemétrico padrão."
 
 def test_warning_telemetry(client):
     data = {
@@ -29,6 +30,7 @@ def test_warning_telemetry(client):
     response = client.post('/api/v1/analyze', json=data)
     assert response.status_code == 200
     assert response.get_json()['riskLevel'] == "WARNING"
+    assert response.get_json()['recommendedAction'] == "Reduzir carga física, reforçar hidratação e reavaliar sinais vitais em 15 minutos."
 
 def test_cross_rule_cardiorespiratory_critical(client):
     data = {
@@ -42,6 +44,7 @@ def test_cross_rule_cardiorespiratory_critical(client):
     response = client.post('/api/v1/analyze', json=data)
     assert response.status_code == 200
     assert response.get_json()['riskLevel'] == "CRITICAL"
+    assert "Abortar atividade extraveicular (EVA)" in response.get_json()['recommendedAction']
 
 def test_invalid_telemetry_returns_422(client):
     data = {

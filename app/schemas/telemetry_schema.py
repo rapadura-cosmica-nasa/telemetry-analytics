@@ -36,3 +36,4 @@ class TelemetrySchema(Schema):
     )
     riskLevel = fields.String(dump_only=True)
     alertMessage = fields.String(dump_only=True)
+    recommendedAction = fields.String(dump_only=True)

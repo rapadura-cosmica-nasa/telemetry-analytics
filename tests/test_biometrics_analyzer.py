@@ -73,3 +73,21 @@ def test_input_payload_is_not_mutated():
 
     assert "riskLevel" not in original_payload
     assert "riskLevel" in result
+
+def test_recommended_action_priority_hierarchy():
+    payload = {
+        "astronautId": "ASTRO-01",
+        "timestamp": "2026-11-14T15:30:00Z",
+        "heartRate": 115,
+        "spo2": 92,
+        "radiationDoseMsv": 2.5,
+        "sleepHours": 8.0,
+    }
+
+    result = analyze_telemetry(payload)
+    
+    assert result['riskLevel'] == "CRITICAL"
+    assert "Exposição crítica à radiação" in result["alertMessage"]
+    assert "Estresse cardiorrespiratório agudo" in result["alertMessage"]
+    assert "Abortar atividade extraveicular (EVA)" in result["recommendedAction"]
+    assert "módulo blindado" not in result["recommendedAction"]
