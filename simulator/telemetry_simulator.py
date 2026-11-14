@@ -3,76 +3,76 @@ import random
 import time
 import requests
 
-url = "http://localhost:8080/api/telemetry"
-
-print("--- SIMULADOR DE TELEMETRIA ESPACIAL (NASA SPACE APPS" \
-") ---")
-print("Escolha o modo de operação para a demonstração:")
-print("1 - Missão Nominal (Valores seguros/estáveis)")
-print("2 - Tempestade Solar / Crítico (Gera alertas para os jurados)")
-print("3 - Aleatório (Comportamento padrão)")
-
-escolha = input("Digite o número do modo desejado (padrão 3): ").strip()
-if escolha not in ["1", "2", "3"]:
-    escolha = "3"
+URL = "http://localhost:8080/api/telemetry"
 
 
-def gerar_dados_astronauta(modo):
-    astronautId = "ASTRO-01"
+def gerar_dados_astronauta(modo: str = "aleatorio") -> dict:
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    if modo == "1": 
-        heartRate = random.randint(65, 85)
-        spo2 = random.randint(97, 100)
-        radiationDoseMsv = round(random.uniform(0.1, 0.4), 2)
-        sleepHours = round(random.uniform(7.5, 8.5), 1)
-    elif modo == "2": 
-        heartRate = random.randint(125, 145)
-        spo2 = random.randint(82, 89)
-        radiationDoseMsv = round(random.uniform(2.1, 3.5), 2)
-        sleepHours = round(random.uniform(3.0, 4.5), 1)
+    if modo == "nominal":
+        heart_rate = random.randint(65, 88)
+        spo2 = random.randint(96, 99)
+        radiation = round(random.uniform(0.1, 0.35), 2)
+        sleep_hours = round(random.uniform(7.2, 8.5), 1)
+    elif modo == "critico":
+        # Simula estresse cardiorrespiratório agudo
+        heart_rate = random.randint(114, 128)
+        spo2 = random.randint(88, 92)
+        radiation = round(random.uniform(1.8, 2.4), 2)
+        sleep_hours = round(random.uniform(4.2, 5.2), 1)
     else:
-        heartRate = random.randint(55, 130)
-        spo2 = random.randint(85, 100)
-        radiationDoseMsv = round(random.uniform(0.3, 2.3), 2)
-        sleepHours = round(random.uniform(4.0, 9.5), 1)
+        heart_rate = random.randint(55, 130)
+        spo2 = random.randint(86, 100)
+        radiation = round(random.uniform(0.2, 2.3), 2)
+        sleep_hours = round(random.uniform(4.5, 9.0), 1)
 
-    dados = {
-        "astronautId": astronautId,
+    return {
+        "astronautId": "ASTRO-01",
         "timestamp": timestamp,
-        "heartRate": heartRate,
+        "heartRate": heart_rate,
         "spo2": spo2,
-        "radiationDoseMsv": radiationDoseMsv,
-        "sleepHours": sleepHours,
+        "radiationDoseMsv": radiation,
+        "sleepHours": sleep_hours,
     }
-    return dados
 
 
-print(f"\nIniciando envio para: {url} (Modo selecionado: {escolha})\n")
+def iniciar_simulacao():
+    print("=== SIMULADOR DE TELEMETRIA ESPACIAL (RAPADURA CÓSMICA) ===")
+    print("Escolha o cenário de simulação:")
+    print("  [1] Missão Nominal (Sinais estáveis)")
+    print("  [2] Alerta Crítico (Estresse cardiorrespiratório / Radiação)")
+    print("  [3] Aleatório (Variação contínua)")
 
-try:
-    while True:
-        biometria = gerar_dados_astronauta(escolha)
-        print("Dados gerados:", biometria if "biometripa" in locals() else biometria)
+    opcao = input("Opção (padrão 3): ").strip()
+    modos = {"1": "nominal", "2": "critico", "3": "aleatorio"}
+    modo_selecionado = modos.get(opcao, "aleatorio")
 
-        try:
-            resposta = requests.post(url, json=biometria, timeout=3)
-            print(f" -> Enviado com sucesso! Status HTTP: {resposta.status_code}")
+    print(f"\nIniciando transmissão em modo [{modo_selecionado.upper()}] para: {URL}")
+    print("Pressione Ctrl+C para encerrar.\n")
 
-            if resposta.content and "application/json" in resposta.headers.get(
-                "Content-Type", ""
-            ):
-                analise = resposta.json()
-                if "riskLevel" in analise:
-                    print(f" -> Nível de Risco Retornado: {analise['riskLevel']}")
+    try:
+        while True:
+            payload = gerar_dados_astronauta(modo=modo_selecionado)
+            print(f"[{payload['timestamp']}] Enviando: HR={payload['heartRate']} bpm | SpO2={payload['spo2']}% | Rad={payload['radiationDoseMsv']} mSv | Sono={payload['sleepHours']}h")
 
-            print()
-        except requests.exceptions.RequestException as e:
-            print(
-                f" -> [Aviso] API Java offline ou instável ({e}). Tentando novamente no próximo ciclo...\n"
-            )
+            try:
+                resposta = requests.post(URL, json=payload, timeout=2)
+                if resposta.ok:
+                    dados_retorno = resposta.json() if resposta.content else {}
+                    risco = dados_retorno.get("riskLevel", "PROCESSADO")
+                    print(f"  -> OK ({resposta.status_code}) | Classificação: {risco}\n")
+                else:
+                    print(f"  -> Rejeitado pela API ({resposta.status_code}): {resposta.text}\n")
+            except requests.exceptions.ConnectionError:
+                print("  -> [Aviso] API Java offline em localhost:8080. Tentando novamente em 3s...\n")
+            except requests.exceptions.RequestException as err:
+                print(f"  -> [Erro de Rede] {err}\n")
 
-        time.sleep(3)
+            time.sleep(3)
 
-except KeyboardInterrupt:
-    print("\nSimulação encerrada pelo usuário.")
+    except KeyboardInterrupt:
+        print("\nSimulação encerrada com segurança pelo operador.")
+
+
+if __name__ == "__main__":
+    iniciar_simulacao()
