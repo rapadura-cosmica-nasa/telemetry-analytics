@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
+import os
 import random
 import time
 import requests
 
-URL = "http://localhost:8080/api/telemetry"
+API_URL = os.getenv("API_URL","http://localhost:8080/api/telemetry")
 
 
 def gerar_dados_astronauta(modo: str = "aleatorio") -> dict:
@@ -47,7 +48,7 @@ def iniciar_simulacao():
     modos = {"1": "nominal", "2": "critico", "3": "aleatorio"}
     modo_selecionado = modos.get(opcao, "aleatorio")
 
-    print(f"\nIniciando transmissão em modo [{modo_selecionado.upper()}] para: {URL}")
+    print(f"\nIniciando transmissão em modo [{modo_selecionado.upper()}] para: {API_URL}")
     print("Pressione Ctrl+C para encerrar.\n")
 
     try:
@@ -56,7 +57,7 @@ def iniciar_simulacao():
             print(f"[{payload['timestamp']}] Enviando: HR={payload['heartRate']} bpm | SpO2={payload['spo2']}% | Rad={payload['radiationDoseMsv']} mSv | Sono={payload['sleepHours']}h")
 
             try:
-                resposta = requests.post(URL, json=payload, timeout=2)
+                resposta = requests.post(API_URL, json=payload, timeout=2)
                 if resposta.ok:
                     dados_retorno = resposta.json() if resposta.content else {}
                     risco = dados_retorno.get("riskLevel", "PROCESSADO")
